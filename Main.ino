@@ -125,13 +125,13 @@ void SM_bus1(){
     break;
 
     case 3: //PRIMARY
-    // Serial.println('I AM NUMBER ONE WAAAAAAAAAAAAAAA');
+    Serial.println('I AM NUMBER ONE WAAAAAAAAAAAAAAA');
     digitalWrite(tx,HIGH);
     val_tx = 1;
     break;
 
     case 4: //SECONDARY
-    // Serial.println("WALUIGI GET'S NO RESPECT");
+    Serial.println("WALUIGI GET'S NO RESPECT");
     digitalWrite(tx,LOW);
     val_tx = 0;
     break;
