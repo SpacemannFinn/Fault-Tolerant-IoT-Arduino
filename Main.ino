@@ -68,8 +68,8 @@ void loop() {
   //State Activator Protocol
 
   //BUTTON ACCESS
-  if(state_bus1 == 3){
-    Serial.println("I TOUCH THE BUTTON MMMM");
+  if(state_bus1 == 3 && state_s1 == 0){
+    // Serial.println("I TOUCH THE BUTTON MMMM");
     state_s1 = 1;
   }
   //LED Control
@@ -83,7 +83,7 @@ void loop() {
   if(DEBUG) {
     //Make a note whenever a state machine changes state
     //("Is the current state different from the previous? Yes? OK well let's tell the world the new state")
-    if((state_prev_s1 != state_s1) | (state_prev_led1 != state_led1)) {
+    if((state_prev_s1 != state_s1) | (state_prev_led1 != state_led1) | (state_prev_bus1 != state_bus1)) {
       Serial.print("Bus State: "); Serial.print(state_bus1);
       Serial.print(" | Switch State: "); Serial.print(state_s1);
       Serial.print(" | LED State: "); Serial.println(state_led1);
@@ -125,15 +125,15 @@ void SM_bus1(){
     break;
 
     case 3: //PRIMARY
-    Serial.println('I AM NUMBER ONE WAAAAAAAAAAAAAAA');
+    // Serial.println('I AM NUMBER ONE WAAAAAAAAAAAAAAA');
     digitalWrite(tx,HIGH);
     val_tx = 1;
     break;
 
     case 4: //SECONDARY
-    Serial.println("WALUIGI GET'S NO RESPECT");
+    // Serial.println("WALUIGI GET'S NO RESPECT");
     digitalWrite(tx,LOW);
-    val_tx = 1;
+    val_tx = 0;
     break;
 
     case 5: //TX PowerState
@@ -201,10 +201,11 @@ void SM_s1() {
   //State Machine Section
   switch(state_s1) {
     case 0: //I'm not ready yet "waaaaaaaaaa"
+    //do nothing only the Bus loop can force us out of this loop
     break;  
 
     case 1: //RESET!
-    state_s1 = 1;
+    state_s1 = 2;
     break;
     
     case 2: //START
