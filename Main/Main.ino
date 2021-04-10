@@ -3,7 +3,9 @@ int DEBUG = 1;  //Set to 1 to enable serial monitor debugging info
 /////////Bus Variables///////////
 int tx = 3;
 int rx = 2;
-int LEDstate = 1;
+int LEDstate = 0;
+int TrackedState = 0;  //Tracking LED State expected to switch to
+int StoredState = 0;
 int state_bus1 = 0;
 int state_prev_bus1 = 0;
 static char rnd;
@@ -16,6 +18,8 @@ enum busStatus_t { idle,
 busStatus_t bus;
 bool trigger, LEDgo;
 unsigned long LEDstateTime;
+unsigned long StateTrackerTime;
+unsigned long StateTrackerTime_0;
 
 void pullDown(unsigned char pin) {
     pinMode(pin, OUTPUT);
@@ -89,6 +93,20 @@ void loop() {
     SM_s1();
     SM_led1();
 
+    //LED Carry On Arbitration
+    if (state_bus1 != 2) {
+        StoredState = state_bus1;
+    }
+    if (state_bus1 != 0) {
+        SM_ltracker1();
+    }
+
+    if (state_bus1 == 2 && state_bus1 != StoredState && StoredState != 0) {
+        state_led1 = TrackedState;
+        StoredState = 0;
+        TrackedState = 0;
+    }
+
     //State Activator Protocol
 
     //BUTTON ACCESS
@@ -116,6 +134,8 @@ void loop() {
         LEDgo = true;  //Allow LED Access
     }
 
+
+
     //DEBUG Output
     if (DEBUG) {
         //Make a note whenever a state machine changes state
@@ -126,7 +146,13 @@ void loop() {
             Serial.print(" | Switch State: ");
             Serial.print(state_s1);
             Serial.print(" | LED State: ");
-            Serial.println(state_led1);
+            Serial.print(state_led1);
+            Serial.print(" | TrackedState: ");
+            Serial.print(TrackedState);
+            Serial.print(" | StoredState: ");
+            Serial.print(StoredState);
+            Serial.print(" | LED Sending State: ");
+            Serial.println(LEDstate);
         }
     }
 }
@@ -243,6 +269,7 @@ void SM_bus1() {
             leaveHigh(tx);
             leaveHigh(rx);
             m = millis();
+            StateTrackerTime_0 = millis();
             if (((long)(m - t)) < 150 && (!digitalRead(rx) && !digitalRead(tx)))
                 state_bus1 = 6;  // stay here
             else if (!(!digitalRead(rx) && !digitalRead(tx)))
@@ -270,6 +297,7 @@ void SM_bus1() {
             leaveHigh(tx);
             leaveHigh(rx);
             m = millis();
+            StateTrackerTime_0 = millis();
             //Serial.print("\t");Serial.println((long)(m-t), DEC);
             if (((long)(m - t)) < 150 && (!digitalRead(rx) && digitalRead(tx)))
                 state_bus1 = 7;  // stay here
@@ -298,6 +326,7 @@ void SM_bus1() {
             leaveHigh(tx);
             leaveHigh(rx);
             m = millis();
+            StateTrackerTime_0 = millis();
             if (((long)(m - t)) < 150 && (digitalRead(rx) && !digitalRead(tx)))
                 state_bus1 = 8;  // stay here
             else if (!(digitalRead(rx) && !digitalRead(tx)))
@@ -516,6 +545,7 @@ void SM_led1() {
 
         case 14:  //OFF
             digitalWrite(pin_led1, LOW);
+            LEDstate = 0;
             state_led1 = 0;
             break;
     }
@@ -567,6 +597,50 @@ void SM_s1() {
             val_s1 = digitalRead(pin_s1);
             if (val_s1 == HIGH) {
                 state_s1 = 5;
+            }
+            break;
+    }
+}
+
+void SM_ltracker1() {
+    switch (LEDstate) {
+        case 0:
+            TrackedState = 0;
+            break;
+        case 1:
+            StateTrackerTime = millis();
+            if (StateTrackerTime - StateTrackerTime_0 < 1000) {
+                TrackedState = 2;
+            } else {
+                TrackedState = 3;
+            }
+            break;
+        case 2:
+            StateTrackerTime = millis();
+            if (StateTrackerTime - StateTrackerTime_0 < 500) {
+                TrackedState = 4;
+            } else if (StateTrackerTime - StateTrackerTime_0 < 1000) {
+                TrackedState = 5;
+            } else if (StateTrackerTime - StateTrackerTime_0 < 1500) {
+                TrackedState = 6;
+            } else {
+                TrackedState = 7;
+            }
+            break;
+        case 3:
+            StateTrackerTime = millis();
+            if (StateTrackerTime - StateTrackerTime_0 < 333) {
+                TrackedState = 8;
+            } else if (StateTrackerTime - StateTrackerTime_0 < 666) {
+                TrackedState = 9;
+            } else if (StateTrackerTime - StateTrackerTime_0 < 999) {
+                TrackedState = 10;
+            } else if (StateTrackerTime - StateTrackerTime_0 < 1332) {
+                TrackedState = 11;
+            } else if (StateTrackerTime - StateTrackerTime_0 < 1666) {
+                TrackedState = 12;
+            } else {
+                TrackedState = 13;
             }
             break;
     }
