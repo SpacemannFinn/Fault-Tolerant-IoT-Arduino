@@ -602,6 +602,7 @@ void SM_s1() {
     }
 }
 
+//LED Tracker that allows it to carry on the LED light along
 void SM_ltracker1() {
     switch (LEDstate) {
         case 0:
